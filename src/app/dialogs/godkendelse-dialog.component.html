@@ -1,0 +1,99 @@
+<div class="dlg-backdrop" (click)="luk()">
+  <form class="dlg" role="dialog" aria-modal="true" aria-labelledby="gk-titel" (click)="$event.stopPropagation()" (ngSubmit)="send()">
+    <div class="dlg-head">
+      <span class="dlg-icon"><span class="ms">verified</span></span>
+      <div>
+        <h2 id="gk-titel">Ny godkendelse</h2>
+        <p>Send en akt til godkendelse. Godkenderne behandler den i den rækkefølge, du angiver.</p>
+      </div>
+      <button type="button" class="icon-btn" (click)="luk()" aria-label="Luk"><span class="ms">close</span></button>
+    </div>
+
+    <div class="dlg-body">
+      @if (akt(); as a) {
+        <div class="linked">
+          <span class="ms">link</span>
+          <div>
+            <strong>{{ a.titel }}</strong>
+            <small>Godkendelsen knyttes til denne akt</small>
+          </div>
+        </div>
+      }
+
+      <div class="field">
+        <label for="gk-titel-felt">Titel</label>
+        <input
+          #titelFelt
+          id="gk-titel-felt"
+          name="titel"
+          class="input"
+          autocomplete="off"
+          placeholder="Hvad skal godkendes?"
+          [class.invalid]="forsoegt() && !titel.trim()"
+          [disabled]="!!akt()"
+          [(ngModel)]="titel"
+        />
+        @if (forsoegt() && !titel.trim()) {
+          <span class="error">Titlen skal udfyldes.</span>
+        }
+      </div>
+
+      <div class="field">
+        <span class="label">Godkendere</span>
+        @if (godkendere.length) {
+          <ol class="approvers">
+            @for (id of godkendere; track id; let i = $index, first = $first, last = $last) {
+              @if (bruger(id); as b) {
+                <li>
+                  <span class="num">{{ i + 1 }}</span>
+                  <span class="avatar" [style.background]="b.farve">{{ b.initialer }}</span>
+                  <span class="name">{{ b.navn }}{{ b.id === d.mig.id ? ' (dig)' : '' }}<small>{{ b.enhed }}</small></span>
+                  <button type="button" class="icon-btn" [disabled]="first" (click)="flyt(i, -1)" aria-label="Flyt op"><span class="ms">arrow_upward</span></button>
+                  <button type="button" class="icon-btn" [disabled]="last" (click)="flyt(i, 1)" aria-label="Flyt ned"><span class="ms">arrow_downward</span></button>
+                  <button type="button" class="icon-btn" (click)="fjern(i)" aria-label="Fjern"><span class="ms">close</span></button>
+                </li>
+              }
+            }
+          </ol>
+        }
+        @if (ledige().length) {
+          <select class="select add-row" [class.invalid]="forsoegt() && !godkendere.length" (change)="tilfoej($event)" aria-label="Tilføj godkender">
+            <option value="">+ Tilføj godkender</option>
+            @for (b of ledige(); track b.id) {
+              <option [value]="b.id">{{ b.navn }}{{ b.id === d.mig.id ? ' (dig)' : '' }} – {{ b.enhed }}</option>
+            }
+          </select>
+        }
+        @if (forsoegt() && !godkendere.length) {
+          <span class="error">Tilføj mindst én godkender.</span>
+        }
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="gk-sag">Sag</label>
+          <select id="gk-sag" name="sag" class="select" [(ngModel)]="sagId" [disabled]="!!akt()">
+            <option [ngValue]="null">Ingen sag</option>
+            @for (sg of aabneSager(); track sg.id) {
+              <option [ngValue]="sg.id">{{ sg.nummer }} · {{ sg.titel }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="gk-frist">Frist</label>
+          <input id="gk-frist" name="frist" type="date" class="input" [min]="minDato" [(ngModel)]="frist" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="gk-besked">Besked til godkenderne</label>
+        <textarea id="gk-besked" name="besked" class="textarea" rows="3" placeholder="Valgfri" [(ngModel)]="besked"></textarea>
+      </div>
+    </div>
+
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-secondary" (click)="luk()">Annullér</button>
+      <button type="submit" class="btn btn-primary"><span class="ms">send</span>Send til godkendelse</button>
+    </div>
+  </form>
+</div>

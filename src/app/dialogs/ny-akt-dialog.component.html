@@ -1,0 +1,117 @@
+<div class="dlg-backdrop" (click)="luk()">
+  <form class="dlg" role="dialog" aria-modal="true" aria-labelledby="ny-akt-titel" (click)="$event.stopPropagation()" (ngSubmit)="opret()">
+    <div class="dlg-head">
+      <span class="dlg-icon"><span class="ms">{{ tekster.ikon }}</span></span>
+      <div>
+        <h2 id="ny-akt-titel">{{ tekster.titel }}</h2>
+        <p>{{ tekster.beskrivelse }}</p>
+      </div>
+      <button type="button" class="icon-btn" (click)="luk()" aria-label="Luk"><span class="ms">close</span></button>
+    </div>
+
+    <div class="dlg-body">
+      @if (kraeverModtager) {
+        <div class="field">
+          <span class="label">Til</span>
+          <div class="input recipients" [class.invalid]="forsoegt() && !tilIds.length">
+            @for (id of tilIds; track id) {
+              @if (bruger(id); as b) {
+                <span class="person-chip">
+                  <span class="avatar" [style.background]="b.farve">{{ b.initialer }}</span>{{ b.navn }}
+                  <button type="button" (click)="fjernModtager(id)" [attr.aria-label]="'Fjern ' + b.navn"><span class="ms">close</span></button>
+                </span>
+              }
+            }
+            @if (andreBrugere().length) {
+              <select class="select" (change)="tilfoejModtager($event)" aria-label="Tilføj modtager">
+                <option value="">+ Tilføj modtager</option>
+                @for (b of andreBrugere(); track b.id) {
+                  <option [value]="b.id">{{ b.navn }} – {{ b.enhed }}</option>
+                }
+              </select>
+            }
+          </div>
+          @if (forsoegt() && !tilIds.length) {
+            <span class="error">Vælg mindst én modtager.</span>
+          }
+        </div>
+      }
+
+      <div class="field">
+        <label for="akt-titel">Titel</label>
+        <input
+          #titelFelt
+          id="akt-titel"
+          name="titel"
+          class="input"
+          [class.invalid]="forsoegt() && !titel.trim()"
+          placeholder="Angiv titel på den nye akt"
+          autocomplete="off"
+          [(ngModel)]="titel"
+        />
+        @if (forsoegt() && !titel.trim()) {
+          <span class="error">Titlen skal udfyldes.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="akt-emne">Emneord</label>
+        <div class="input tag-input" (click)="emneFelt.focus()">
+          @for (e of emneord; track e) {
+            <span class="chip">
+              {{ e }}
+              <button type="button" (click)="fjernEmne(e); $event.stopPropagation()" [attr.aria-label]="'Fjern ' + e">
+                <span class="ms">close</span>
+              </button>
+            </span>
+          }
+          <input
+            #emneFelt
+            id="akt-emne"
+            name="emne"
+            autocomplete="off"
+            [placeholder]="emneord.length ? '' : 'Vælg emneord'"
+            [(ngModel)]="emneInput"
+            (keydown)="emneTast($event)"
+          />
+          <span class="ms tag-ico">sell</span>
+        </div>
+        @if (forslag().length) {
+          <div class="suggest">
+            @for (f of forslag(); track f) {
+              <button type="button" (click)="tilfoejEmne(f)">+ {{ f }}</button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field">
+        <label for="akt-sag">
+          Sag
+          <span class="ms info" title="Akter på en sag bliver journaliseret og kan findes i Arkivet.">info</span>
+        </label>
+        <div class="with-icon">
+          <select id="akt-sag" name="sag" class="select" [(ngModel)]="sagId">
+            <option [ngValue]="null">Vælg en sag</option>
+            @for (sg of aabneSager(); track sg.id) {
+              <option [ngValue]="sg.id">{{ sg.nummer }} · {{ sg.titel }}</option>
+            }
+          </select>
+          <span class="ms">cases</span>
+        </div>
+      </div>
+
+      @if (aktType !== 'akt') {
+        <div class="field">
+          <label for="akt-tekst">{{ aktType === 'chat' ? 'Besked' : 'Indhold' }}</label>
+          <textarea id="akt-tekst" name="tekst" class="textarea" rows="5" [(ngModel)]="tekst"></textarea>
+        </div>
+      }
+    </div>
+
+    <div class="dlg-foot split">
+      <button type="submit" class="btn btn-primary">{{ tekster.knap }}</button>
+      <button type="button" class="btn btn-secondary" (click)="luk()">Annullér</button>
+    </div>
+  </form>
+</div>

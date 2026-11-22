@@ -1,0 +1,88 @@
+<app-ribbon />
+
+<div class="tabstrip">
+  <button class="icon-btn menu-btn" (click)="sidebarAaben.set(!sidebarAaben())" aria-label="Vis lister">
+    <span class="ms">menu</span>
+  </button>
+  <div class="tabs" role="tablist">
+    @for (f of s.faner(); track f.id) {
+      <div
+        class="tab"
+        role="tab"
+        tabindex="0"
+        [class.active]="f.id === s.aktivFaneId()"
+        [attr.aria-selected]="f.id === s.aktivFaneId()"
+        (click)="s.vaelgFane(f.id)"
+        (keydown.enter)="s.vaelgFane(f.id)"
+      >
+        <span class="ms">{{ s.faneIkon(f) }}</span>
+        <span class="tab-title">{{ s.faneTitel(f) }}</span>
+        @if (s.faner().length > 1) {
+          <button class="tab-close" (click)="$event.stopPropagation(); s.lukFane(f.id)" aria-label="Luk fane">
+            <span class="ms">close</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+  <button class="icon-btn add-tab" (click)="s.nyFane()" title="Ny fane" aria-label="Ny fane">
+    <span class="ms">add</span>
+  </button>
+</div>
+
+<div class="workspace" [class.no-preview]="!s.visLaeserude() || s.aktivFane().kind === 'akt'">
+  <app-sidebar [class.open]="sidebarAaben()" (navigeret)="sidebarAaben.set(false)" />
+  @if (sidebarAaben()) {
+    <div class="scrim" (click)="sidebarAaben.set(false)"></div>
+  }
+
+  <main class="main">
+    @if (s.aktivFane().kind === 'akt') {
+      <app-preview class="full" [aktId]="s.aktivFane().aktId ?? null" />
+    } @else {
+      <app-liste />
+    }
+  </main>
+
+  @if (s.visLaeserude() && s.aktivFane().kind !== 'akt') {
+    <app-preview class="side" [class.has-selection]="s.fokusId() !== null" />
+  }
+</div>
+
+<footer class="statusbar">
+  <span class="ms">sync</span>
+  <span>
+    {{ s.antalResultater() }} {{ s.antalResultater() === 1 ? 'resultat' : 'resultater' }} · opdateret i dag
+    {{ d.opdateret() | date: 'HH:mm' }} ({{ minutterSiden() }} {{ minutterSiden() === 1 ? 'minut' : 'minutter' }} siden)
+  </span>
+  <button class="sb-link" (click)="opdater()">Opdater</button>
+  <span class="spacer"></span>
+  @if (s.valgte().size > 1) {
+    <span class="sb-pill">{{ s.valgte().size }} valgt</span>
+  }
+  <span class="sb-muted">Tryk <kbd>/</kbd> for at søge · <kbd>Alt</kbd>+<kbd>N</kbd> ny akt</span>
+</footer>
+
+@switch (s.dialog()?.type) {
+  @case ('ny-akt') { <app-ny-akt-dialog /> }
+  @case ('godkendelse') { <app-godkendelse-dialog /> }
+  @case ('soegning') { <app-soegning-dialog /> }
+  @case ('kalender') { <app-kalender-dialog /> }
+  @case ('paamindelser') { <app-kalender-dialog /> }
+  @case ('ny-sag') { <app-ny-sag-dialog /> }
+  @case ('genveje') { <app-info-dialog /> }
+  @case ('om') { <app-info-dialog /> }
+}
+
+<div class="toasts" aria-live="polite">
+  @for (t of s.toasts(); track t.id) {
+    <div class="toast">
+      <span class="ms">{{ t.ikon }}</span>
+      <span class="toast-text">{{ t.tekst }}</span>
+      @if (t.handling; as h) {
+        <button class="toast-action" (click)="h.fn(); s.lukToast(t.id)">{{ h.navn }}</button>
+      }
+      <button class="toast-close" (click)="s.lukToast(t.id)" aria-label="Luk"><span class="ms">close</span></button>
+    </div>
+  }
+</div>

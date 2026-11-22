@@ -1,0 +1,89 @@
+<div class="side-tabs" role="tablist">
+  <button role="tab" [class.active]="s.sidebarFane() === 'akter'" (click)="s.sidebarFane.set('akter')" title="Lister">
+    <span class="ms" [class.fill]="s.sidebarFane() === 'akter'">description</span>
+  </button>
+  <button role="tab" [class.active]="s.sidebarFane() === 'sager'" (click)="s.sidebarFane.set('sager')" title="Sager">
+    <span class="ms" [class.fill]="s.sidebarFane() === 'sager'">folder</span>
+  </button>
+  <button role="tab" [class.active]="s.sidebarFane() === 'personer'" (click)="s.sidebarFane.set('personer')" title="Personer">
+    <span class="ms" [class.fill]="s.sidebarFane() === 'personer'">group</span>
+  </button>
+</div>
+
+<label class="side-search">
+  <span class="ms">search</span>
+  <input
+    type="search"
+    [placeholder]="s.sidebarFane() === 'akter' ? 'Søg i lister' : s.sidebarFane() === 'sager' ? 'Søg i sager' : 'Søg efter personer'"
+    [value]="filter()"
+    (input)="filter.set($any($event.target).value)"
+  />
+</label>
+
+<nav class="lists">
+  @switch (s.sidebarFane()) {
+    @case ('akter') {
+      @if (visFavoritter()) {
+        <button class="item" [class.active]="s.aktivListeId() === 'favoritter'" (click)="vis('favoritter')">
+          <span class="ms fill star">star</span>
+          <span class="name">Favoritter</span>
+        </button>
+      }
+
+      <button class="group-toggle" (click)="standardAaben.set(!standardAaben())" [attr.aria-expanded]="standardAaben()">
+        <span class="ms chevron" [class.closed]="!standardAaben()">expand_more</span>
+        Standard
+      </button>
+
+      @if (standardAaben()) {
+        @for (l of standard(); track l.id) {
+          <button class="item" [class.active]="s.aktivListeId() === l.id" (click)="vis(l.id)">
+            <span class="ms" [class.fill]="s.aktivListeId() === l.id">{{ l.ikon }}</span>
+            <span class="name">{{ l.navn }}</span>
+            @if (badges()[l.id]; as n) {
+              <span class="badge" [class.soft]="l.badge === 'alle'">{{ n }}</span>
+            }
+          </button>
+        } @empty {
+          <p class="none">Ingen lister matcher “{{ filter() }}”.</p>
+        }
+      }
+    }
+
+    @case ('sager') {
+      <div class="section-head">
+        <span>Sager</span>
+        <button class="icon-btn sm" (click)="s.dialog.set({ type: 'ny-sag' })" title="Ny sag">
+          <span class="ms">add</span>
+        </button>
+      </div>
+      @for (sag of sager(); track sag.id) {
+        <button class="item sag" (click)="aabnSag(sag)">
+          <span class="ms" [class.lukket]="sag.status === 'lukket'">{{ sag.status === 'åben' ? 'folder_open' : 'folder' }}</span>
+          <span class="name">
+            <strong>{{ sag.nummer }}</strong>
+            <small>{{ sag.titel }}</small>
+          </span>
+          <span class="badge soft">{{ antalPrSag().get(sag.id) ?? 0 }}</span>
+        </button>
+      } @empty {
+        <p class="none">Ingen sager fundet.</p>
+      }
+    }
+
+    @case ('personer') {
+      <div class="section-head"><span>Kolleger</span></div>
+      @for (b of brugere(); track b.id) {
+        <button class="item person" (click)="aktFra(b)" [title]="'Vis akter fra ' + b.navn">
+          <span class="avatar" [style.background]="b.farve">{{ b.initialer }}</span>
+          <span class="name">
+            <strong>{{ b.navn }}{{ b.id === d.mig.id ? ' (dig)' : '' }}</strong>
+            <small>{{ b.enhed }}</small>
+          </span>
+        </button>
+      } @empty {
+        <p class="none">Ingen personer fundet.</p>
+      }
+    }
+  }
+</nav>

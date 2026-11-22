@@ -1,0 +1,368 @@
+<header class="titlebar">
+  <div class="brand">
+    <span class="logo"><span class="ms fill">folder_managed</span></span>
+    <span class="brand-name">Sagsflow</span>
+    <span class="env">Test</span>
+  </div>
+
+  <nav class="menubar" role="tablist" aria-label="Hovedmenu">
+    @for (m of menuer; track m.id) {
+      <button
+        role="tab"
+        [class.active]="s.menuFane() === m.id && !s.ribbonSkjult()"
+        [attr.aria-selected]="s.menuFane() === m.id"
+        (click)="vaelgMenu(m.id)"
+      >
+        {{ m.navn }}
+      </button>
+    }
+  </nav>
+
+  <div class="spacer"></div>
+
+  <div class="dd">
+    <button class="user" (click)="toggle('bruger', $event)">
+      <span class="avatar" [style.background]="d.mig.farve">{{ d.mig.initialer }}</span>
+      <span class="user-text">
+        <strong>{{ d.mig.navn }}</strong>
+        <small>{{ d.mig.enhed }}</small>
+      </span>
+      <span class="ms">expand_more</span>
+    </button>
+    @if (menu() === 'bruger') {
+      <div class="menu right">
+        <div class="menu-label">Logget ind som</div>
+        <div class="menu-item static">
+          <span class="avatar" [style.background]="d.mig.farve">{{ d.mig.initialer }}</span>
+          <span>{{ d.mig.navn }}<span class="sub">{{ d.mig.enhed }}</span></span>
+        </div>
+        <div class="menu-sep"></div>
+        <button class="menu-item" (click)="s.tema.set(s.tema() === 'lys' ? 'moerk' : 'lys')">
+          <span class="ms">{{ s.tema() === 'lys' ? 'dark_mode' : 'light_mode' }}</span>
+          {{ s.tema() === 'lys' ? 'Skift til mørkt tema' : 'Skift til lyst tema' }}
+        </button>
+        <button class="menu-item" (click)="logUd()"><span class="ms">logout</span>Log ud</button>
+      </div>
+    }
+  </div>
+
+  <button
+    class="collapse"
+    (click)="s.ribbonSkjult.set(!s.ribbonSkjult())"
+    [attr.aria-label]="s.ribbonSkjult() ? 'Vis båndet' : 'Skjul båndet'"
+    [title]="s.ribbonSkjult() ? 'Vis båndet' : 'Skjul båndet'"
+  >
+    <span class="ms">{{ s.ribbonSkjult() ? 'expand_more' : 'expand_less' }}</span>
+  </button>
+</header>
+
+<!-- Flag/frist-gruppe genbruges til "Mig" og teamet -->
+<ng-template #flagGruppe let-hvem let-label="label">
+  <div class="group">
+    <div class="gbody flag-group">
+      <div class="flag-row">
+        <label>Flag</label>
+        <div class="dd">
+          <button class="flag-select" [disabled]="!harValg()" (click)="toggle('flag-' + hvem, $event)">
+            <span
+              class="flag-dot"
+              [class.none]="!flagFor(hvem)?.farve"
+              [style.background]="flagInfo(flagFor(hvem)?.farve ?? '').farve"
+            ></span>
+            <span class="lbl">{{ flagFor(hvem)?.farve ? flagInfo(flagFor(hvem)!.farve).navn : 'Vælg flag' }}</span>
+            <span class="ms">expand_more</span>
+          </button>
+          @if (menu() === 'flag-' + hvem) {
+            <div class="menu">
+              @for (f of flagFarver; track f.id) {
+                <button class="menu-item" (click)="s.saetFlag(hvem, f.id)">
+                  <span class="flag-dot" [class.none]="!f.id" [style.background]="f.farve"></span>
+                  {{ f.navn }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="flag-row">
+        <label>Frist</label>
+        <input
+          type="date"
+          class="date"
+          [disabled]="!harValg()"
+          [value]="flagFor(hvem)?.frist ?? ''"
+          (change)="frist(hvem, $event)"
+        />
+      </div>
+    </div>
+    <div class="glabel" [title]="label">{{ label }}</div>
+  </div>
+</ng-template>
+
+@if (!s.ribbonSkjult()) {
+  <div class="ribbon">
+    @switch (s.menuFane()) {
+      @case ('hoved') {
+        <!-- Navigation -->
+        <div class="group">
+          <div class="gbody">
+            <div class="dd">
+              <button class="rb big" (click)="toggle('sag', $event)">
+                <span class="ms">cases</span><span>Gå til sag</span><span class="ms caret">expand_more</span>
+              </button>
+              @if (menu() === 'sag') {
+                <div class="menu">
+                  @if (fokusSag(); as fs) {
+                    <div class="menu-label">Valgt akts sag</div>
+                    <button class="menu-item" (click)="s.gaaTilSag(fs.id)">
+                      <span class="ms">folder_open</span>
+                      <span><strong>{{ fs.nummer }}</strong><span class="sub">{{ fs.titel }}</span></span>
+                    </button>
+                    <div class="menu-sep"></div>
+                  }
+                  <div class="menu-label">Åbne sager</div>
+                  @for (sg of aabneSager(); track sg.id) {
+                    <button class="menu-item" (click)="s.gaaTilSag(sg.id)">
+                      <span class="ms">folder</span>
+                      <span><strong>{{ sg.nummer }}</strong><span class="sub">{{ sg.titel }}</span></span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <div class="dd">
+              <button class="rb big" (click)="toggle('akt', $event)">
+                <span class="ms">description</span><span>Gå til akt</span><span class="ms caret">expand_more</span>
+              </button>
+              @if (menu() === 'akt') {
+                <div class="menu">
+                  @if (fokus(); as f) {
+                    <button class="menu-item" (click)="s.aabnAkt(f.id)">
+                      <span class="ms">open_in_new</span>
+                      <span>Åbn valgt akt<span class="sub">{{ f.titel }}</span></span>
+                    </button>
+                    <div class="menu-sep"></div>
+                  }
+                  <div class="menu-label">Senest viste</div>
+                  @for (a of senesteAkter(); track a!.id) {
+                    <button class="menu-item" (click)="s.aabnAkt(a!.id)">
+                      <span class="ms">history</span><span>{{ a!.titel }}</span>
+                    </button>
+                  } @empty {
+                    <div class="menu-empty">Du har ikke åbnet nogen akter endnu.</div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div class="glabel">Navigation</div>
+        </div>
+
+        <!-- Ny -->
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big primary" (click)="s.nyAkt('akt')" title="Ny akt (Alt+N)">
+              <span class="ms">note_add</span><span>Ny akt</span>
+            </button>
+            <div class="stack">
+              <button class="rb small" (click)="s.nyAkt('email')"><span class="ms">mail</span>Ny e-mail</button>
+              <button class="rb small" (click)="s.nyAkt('dokument')"><span class="ms">article</span>Nyt dokument</button>
+              <button class="rb small" (click)="s.dialog.set({ type: 'godkendelse' })">
+                <span class="ms">verified</span>Ny godkendelse
+              </button>
+            </div>
+            <button class="rb big" (click)="s.nyAkt('chat')">
+              <span class="ms">chat_add_on</span><span>Ny chat</span>
+            </button>
+          </div>
+          <div class="glabel">Ny</div>
+        </div>
+
+        <!-- Svar -->
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" [disabled]="!kanSvare()" (click)="s.svar('svar')">
+              <span class="ms">reply</span><span>Svar</span>
+            </button>
+            <div class="stack">
+              <button class="rb small" [disabled]="!kanSvare()" (click)="s.svar('alle')">
+                <span class="ms">reply_all</span>Svar alle
+              </button>
+              <button class="rb small" [disabled]="!kanSvare()" (click)="s.svar('videresend')">
+                <span class="ms">forward</span>Videresend
+              </button>
+              <button class="rb small" [disabled]="!harValg()" (click)="s.dialog.set({ type: 'kalender' })">
+                <span class="ms">event</span>Åbn i kalender
+              </button>
+            </div>
+          </div>
+          <div class="glabel">Svar</div>
+        </div>
+
+        <!-- Fjern -->
+        <div class="group">
+          <div class="gbody">
+            <div class="stack">
+              <button class="rb small" [disabled]="!harValg()" (click)="s.arkiver()">
+                <span class="ms">inventory_2</span>Arkivér
+              </button>
+              <button class="rb small" [disabled]="!harValg()" (click)="s.fjernFraListe()">
+                <span class="ms">playlist_remove</span>Fjern fra liste
+              </button>
+              <button class="rb small danger" [disabled]="!harValg()" (click)="s.slet()">
+                <span class="ms">delete</span>Slet akter
+              </button>
+            </div>
+          </div>
+          <div class="glabel">Fjern</div>
+        </div>
+
+        <ng-container *ngTemplateOutlet="flagGruppe; context: { $implicit: 'mig', label: 'Mig' }"></ng-container>
+        <ng-container *ngTemplateOutlet="flagGruppe; context: { $implicit: 'team', label: enhedKort() }"></ng-container>
+
+        <!-- Udskriv -->
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="udskriv()"><span class="ms">print</span><span>Udskriv</span></button>
+          </div>
+          <div class="glabel">Udskriv</div>
+        </div>
+
+        <!-- Søg -->
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="s.dialog.set({ type: 'soegning' })" title="Avanceret søgning (Alt+F)">
+              <span class="ms">manage_search</span><span>Avanceret søgning</span>
+            </button>
+            <div class="dd">
+              <button class="rb big" (click)="toggle('historik', $event)">
+                <span class="ms">history</span><span>Søgehistorik</span><span class="ms caret">expand_more</span>
+              </button>
+              @if (menu() === 'historik') {
+                <div class="menu right">
+                  <div class="menu-label">Seneste søgninger</div>
+                  @for (k of s.soegehistorik(); track $index) {
+                    <button class="menu-item" (click)="s.soeg(k)">
+                      <span class="ms">search</span><span>{{ s.beskrivSoegning(k) }}</span>
+                    </button>
+                  } @empty {
+                    <div class="menu-empty">Ingen tidligere søgninger.</div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div class="glabel">Søg</div>
+        </div>
+
+        <!-- Kalender -->
+        <div class="group">
+          <div class="gbody">
+            <div class="stack">
+              <button class="rb small" (click)="s.dialog.set({ type: 'kalender' })">
+                <span class="ms">calendar_month</span>Åbn kalender
+              </button>
+              <button class="rb small" (click)="s.dialog.set({ type: 'paamindelser' })">
+                <span class="ms">notifications</span>Vis alle påmindelser
+              </button>
+            </div>
+          </div>
+          <div class="glabel">Kalender</div>
+        </div>
+      }
+
+      @case ('app') {
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="opdater()"><span class="ms">sync</span><span>Opdater</span></button>
+            <button class="rb big" (click)="s.nyFane()"><span class="ms">tab</span><span>Ny fane</span></button>
+          </div>
+          <div class="glabel">Visning</div>
+        </div>
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="logUd()"><span class="ms">logout</span><span>Log ud</span></button>
+          </div>
+          <div class="glabel">Konto</div>
+        </div>
+      }
+
+      @case ('indstillinger') {
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big toggle" [class.on]="s.tema() === 'lys'" (click)="s.tema.set('lys')">
+              <span class="ms">light_mode</span><span>Lyst</span>
+            </button>
+            <button class="rb big toggle" [class.on]="s.tema() === 'moerk'" (click)="s.tema.set('moerk')">
+              <span class="ms">dark_mode</span><span>Mørkt</span>
+            </button>
+          </div>
+          <div class="glabel">Tema</div>
+        </div>
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big toggle" [class.on]="s.taethed() === 'normal'" (click)="s.taethed.set('normal')">
+              <span class="ms">density_medium</span><span>Normal</span>
+            </button>
+            <button class="rb big toggle" [class.on]="s.taethed() === 'kompakt'" (click)="s.taethed.set('kompakt')">
+              <span class="ms">density_small</span><span>Kompakt</span>
+            </button>
+          </div>
+          <div class="glabel">Tæthed</div>
+        </div>
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big toggle" [class.on]="s.visLaeserude()" (click)="s.visLaeserude.set(!s.visLaeserude())">
+              <span class="ms">vertical_split</span><span>Læserude</span>
+            </button>
+          </div>
+          <div class="glabel">Layout</div>
+        </div>
+      }
+
+      @case ('admin') {
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big primary" (click)="s.dialog.set({ type: 'ny-sag' })">
+              <span class="ms">create_new_folder</span><span>Ny sag</span>
+            </button>
+            <button class="rb big" (click)="s.sidebarFane.set('sager')">
+              <span class="ms">folder_copy</span><span>Sagsoversigt</span>
+            </button>
+          </div>
+          <div class="glabel">Sager</div>
+        </div>
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="s.sidebarFane.set('personer')">
+              <span class="ms">group</span><span>Brugere</span>
+            </button>
+          </div>
+          <div class="glabel">Organisation</div>
+        </div>
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="nulstilDemo()">
+              <span class="ms">restart_alt</span><span>Nulstil demodata</span>
+            </button>
+          </div>
+          <div class="glabel">Data</div>
+        </div>
+      }
+
+      @case ('hjaelp') {
+        <div class="group">
+          <div class="gbody">
+            <button class="rb big" (click)="s.dialog.set({ type: 'genveje' })">
+              <span class="ms">keyboard</span><span>Tastaturgenveje</span>
+            </button>
+            <button class="rb big" (click)="s.dialog.set({ type: 'om' })">
+              <span class="ms">info</span><span>Om Sagsflow</span>
+            </button>
+          </div>
+          <div class="glabel">Hjælp</div>
+        </div>
+      }
+    }
+  </div>
+}

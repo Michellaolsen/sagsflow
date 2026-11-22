@@ -1,0 +1,166 @@
+@if (flereValgt()) {
+  <div class="empty-state">
+    <span class="empty-icon"><span class="ms">select_all</span></span>
+    <h3>{{ s.valgte().size }} akter valgt</h3>
+    <p>Brug båndet til at arkivere, flage eller slette dem samlet.</p>
+    <div class="multi-actions">
+      <button class="btn btn-secondary" (click)="s.arkiver()"><span class="ms">inventory_2</span>Arkivér</button>
+      <button class="btn btn-danger" (click)="s.slet()"><span class="ms">delete</span>Slet</button>
+    </div>
+  </div>
+} @else if (akt()) {
+  @let a = akt()!;
+  <div class="pv" [class.full]="fuld()">
+    <div class="pv-top">
+      <span class="type-badge" [attr.data-type]="a.type"><span class="ms">{{ type().ikon }}</span>{{ type().navn }}</span>
+      <span class="spacer"></span>
+      <button class="icon-btn" (click)="d.toggleFavorit(a.id)" [title]="a.favorit ? 'Fjern fra favoritter' : 'Tilføj til favoritter'">
+        <span class="ms" [class.fill]="a.favorit" [class.fav]="a.favorit">star</span>
+      </button>
+      <button class="icon-btn" (click)="s.svar('svar')" title="Svar" [disabled]="fuld() && s.fokusId() !== a.id">
+        <span class="ms">reply</span>
+      </button>
+      @if (!fuld()) {
+        <button class="icon-btn" (click)="s.aabnAkt(a.id)" title="Åbn i ny fane"><span class="ms">open_in_new</span></button>
+        <button class="icon-btn close-btn" (click)="luk()" title="Luk"><span class="ms">close</span></button>
+      }
+    </div>
+
+    <h2 class="pv-title">{{ a.titel }}</h2>
+
+    <div class="pv-from">
+      @if (fra(); as f) {
+        <span class="avatar" [style.background]="f.farve">{{ f.initialer }}</span>
+        <div>
+          <strong>{{ f.navn }}</strong>
+          <small>{{ a.brevdato | date: "EEEE d. MMMM y 'kl.' HH:mm" }}</small>
+        </div>
+      }
+    </div>
+
+    <dl class="meta">
+      @if (til().length) {
+        <dt>Til</dt>
+        <dd class="people">
+          @for (b of til(); track b!.id) {
+            <span class="person"><span class="avatar xs" [style.background]="b!.farve">{{ b!.initialer }}</span>{{ b!.navn }}</span>
+          }
+        </dd>
+      }
+      <dt>Sag</dt>
+      <dd>
+        @if (sag(); as sg) {
+          <button class="link" (click)="s.gaaTilSag(sg.id)">
+            <span class="ms">folder_open</span>{{ sg.nummer }} · {{ sg.titel }}
+          </button>
+        } @else {
+          <span class="muted">Ikke tilknyttet en sag</span>
+        }
+      </dd>
+      @if (a.emneord.length) {
+        <dt>Emneord</dt>
+        <dd class="chips">
+          @for (e of a.emneord; track e) {
+            <span class="chip">{{ e }}</span>
+          }
+        </dd>
+      }
+      @if (a.mitFlag.farve || a.mitFlag.frist) {
+        <dt>Mit flag</dt>
+        <dd class="flag-line">
+          <span class="flag-dot" [style.background]="flag(a.mitFlag).farve"></span>{{ a.mitFlag.farve ? flag(a.mitFlag).navn : 'Intet flag' }}
+          @if (a.mitFlag.frist) {
+            <span class="frist" [attr.data-status]="fristStatus(a.mitFlag.frist)">
+              <span class="ms">event</span>{{ a.mitFlag.frist | date: 'd. MMM' }}
+            </span>
+          }
+        </dd>
+      }
+      @if (a.teamFlag.farve || a.teamFlag.frist) {
+        <dt>Teamflag</dt>
+        <dd class="flag-line">
+          <span class="flag-dot round" [style.background]="flag(a.teamFlag).farve"></span>{{ a.teamFlag.farve ? flag(a.teamFlag).navn : 'Intet flag' }}
+          @if (a.teamFlag.frist) {
+            <span class="frist" [attr.data-status]="fristStatus(a.teamFlag.frist)">
+              <span class="ms">event</span>{{ a.teamFlag.frist | date: 'd. MMM' }}
+            </span>
+          }
+        </dd>
+      }
+    </dl>
+
+    @if (a.godkendelse; as g) {
+      <section class="approval" [attr.data-status]="g.status">
+        <header>
+          <span class="ms">verified</span>
+          <strong>Godkendelse</strong>
+          <span class="status-chip" [attr.data-status]="g.status">
+            {{ g.status === 'afventer' ? 'Afventer' : g.status === 'godkendt' ? 'Godkendt' : 'Afvist' }}
+          </span>
+          @if (g.frist) {
+            <span class="frist" [attr.data-status]="g.status === 'afventer' ? fristStatus(g.frist) : ''">
+              <span class="ms">event</span>Frist {{ g.frist | date: 'd. MMM' }}
+            </span>
+          }
+        </header>
+
+        @if (g.besked) {
+          <p class="besked">“{{ g.besked }}”</p>
+        }
+
+        <ol class="steps">
+          @for (t of g.trin; track $index) {
+            <li [attr.data-status]="t.status" [class.current]="erAktuelt(t)">
+              <span class="step-icon"><span class="ms">{{ trinIkon(t) }}</span></span>
+              <div class="step-body">
+                <div class="step-head">
+                  <strong>{{ bruger(t.godkenderId)?.navn }}{{ t.godkenderId === d.mig.id ? ' (dig)' : '' }}</strong>
+                  @if (t.dato) {
+                    <small>{{ t.dato | date: 'd. MMM HH:mm' }}</small>
+                  }
+                </div>
+                @if (t.kommentar) {
+                  <p>{{ t.kommentar }}</p>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+
+        @if (venterPaaMig()) {
+          <div class="decide">
+            <label for="kommentar">Din kommentar <span class="muted">(valgfri)</span></label>
+            <textarea
+              id="kommentar"
+              class="textarea"
+              rows="2"
+              placeholder="Skriv en kommentar til godkendelsen…"
+              [value]="kommentar()"
+              (input)="kommentar.set($any($event.target).value)"
+            ></textarea>
+            <div class="decide-actions">
+              <button class="btn btn-danger" (click)="afvis()"><span class="ms">close</span>Afvis</button>
+              <button class="btn btn-success" (click)="godkend()"><span class="ms">check</span>Godkend</button>
+            </div>
+          </div>
+        }
+      </section>
+    } @else if (erMin()) {
+      <button class="request" (click)="s.dialog.set({ type: 'godkendelse', aktId: a.id })">
+        <span class="ms">verified</span>
+        <span><strong>Send til godkendelse</strong><small>Vælg godkendere og en frist</small></span>
+        <span class="ms">chevron_right</span>
+      </button>
+    }
+
+    @if (a.tekst) {
+      <div class="pv-body">{{ a.tekst }}</div>
+    }
+  </div>
+} @else {
+  <div class="empty-state">
+    <span class="empty-icon"><span class="ms">preview</span></span>
+    <h3>Ingen akt valgt</h3>
+    <p>Vælg en akt i listen for at se den her.</p>
+  </div>
+}

@@ -1,0 +1,219 @@
+<div class="view-tabs" role="tablist">
+  @for (t of visningsFaner; track t.id) {
+    <button role="tab" [class.active]="s.mainTab() === t.id" (click)="s.mainTab.set(t.id)">
+      {{ t.navn }}
+      <span class="count">{{ s.taellere()[t.id] }}</span>
+    </button>
+  }
+</div>
+
+<div class="toolbar">
+  <label class="search">
+    <span class="ms">search</span>
+    <input
+      id="liste-soeg"
+      type="text"
+      autocomplete="off"
+      [placeholder]="s.mainTab() === 'sager' ? 'Søg på sager her' : 'Søg på akter her'"
+      [value]="s.soegetekst()"
+      (input)="s.soegetekst.set($any($event.target).value)"
+      (keydown.escape)="s.soegetekst.set('')"
+    />
+    @if (s.soegetekst()) {
+      <button class="clear" (click)="s.soegetekst.set('')" aria-label="Ryd søgning"><span class="ms">close</span></button>
+    } @else {
+      <kbd>/</kbd>
+    }
+  </label>
+
+  <div class="dd">
+    <button class="tb-btn" [class.on]="s.filtre().size > 0" (click)="toggle('filter', $event)">
+      <span class="ms">filter_list</span>
+      Filter
+      @if (s.filtre().size) {
+        <span class="pill">{{ s.filtre().size }}</span>
+      }
+      <span class="ms caret">expand_more</span>
+    </button>
+    @if (menu() === 'filter') {
+      <div class="menu right" (click)="$event.stopPropagation()">
+        <div class="menu-label">Vis kun</div>
+        @for (f of filterValg; track f.id) {
+          <label class="menu-item check">
+            <input type="checkbox" [checked]="s.filtre().has(f.id)" (change)="toggleFilter(f.id)" />
+            <span class="ms">{{ f.ikon }}</span>
+            {{ f.navn }}
+          </label>
+        }
+        @if (s.filtre().size) {
+          <div class="menu-sep"></div>
+          <button class="menu-item" (click)="rydFiltre()"><span class="ms">filter_alt_off</span>Ryd filtre</button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="dd">
+    <button class="tb-btn" (click)="toggle('kriterier', $event)">
+      <span class="ms">tune</span>
+      Søgekriterier
+      <span class="ms caret">expand_more</span>
+    </button>
+    @if (menu() === 'kriterier') {
+      <div class="menu right" (click)="$event.stopPropagation()">
+        <div class="menu-label">Søg i</div>
+        @for (f of feltValg; track f.id) {
+          <label class="menu-item check">
+            <input type="checkbox" [checked]="s.soegefelter().has(f.id)" (change)="toggleFelt(f.id)" />
+            {{ f.navn }}
+          </label>
+        }
+        <div class="menu-sep"></div>
+        <button class="menu-item" (click)="menu.set(null); s.dialog.set({ type: 'soegning' })">
+          <span class="ms">manage_search</span>Avanceret søgning…
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+@if (fanesSag(); as sag) {
+  <div class="context-banner">
+    <span class="banner-icon"><span class="ms">folder_open</span></span>
+    <div class="banner-text">
+      <strong>{{ sag.nummer }} · {{ sag.titel }}</strong>
+      <small>
+        <span class="dot" [class.closed]="sag.status === 'lukket'"></span>{{ sag.status === 'åben' ? 'Åben' : 'Lukket' }}
+        · Ansvarlig: {{ ansvarlig(sag.ansvarligId)?.navn }} · Oprettet {{ sag.oprettet | date: 'd. MMM y' }}
+      </small>
+    </div>
+    <button class="btn btn-secondary" (click)="s.nyAkt('akt', sag.id)"><span class="ms">note_add</span>Ny akt på sagen</button>
+  </div>
+}
+
+@if (fane().kind === 'soegning') {
+  <div class="context-banner">
+    <span class="banner-icon"><span class="ms">manage_search</span></span>
+    <div class="banner-text">
+      <strong>Søgeresultat</strong>
+      <small>{{ s.beskrivSoegning(fane().soegning!) }}</small>
+    </div>
+    <button class="btn btn-secondary" (click)="s.dialog.set({ type: 'soegning', kriterier: fane().soegning })">
+      <span class="ms">edit</span>Ret søgning
+    </button>
+  </div>
+}
+
+<div class="table-wrap" #grid tabindex="0" (keydown)="tast($event)" aria-label="Resultatliste">
+  @if (s.mainTab() === 'sager') {
+    @if (s.sagerIVisning().length) {
+      <table class="grid">
+        <thead>
+          <tr>
+            <th class="c-ikon"></th>
+            <th>Sagsnummer</th>
+            <th class="c-titel">Titel</th>
+            <th>Status</th>
+            <th class="c-fra">Ansvarlig</th>
+            <th class="num">Akter</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sag of s.sagerIVisning(); track sag.id) {
+            <tr (click)="s.gaaTilSag(sag.id)">
+              <td class="c-ikon"><span class="ms type">{{ sag.status === 'åben' ? 'folder_open' : 'folder' }}</span></td>
+              <td class="strong">{{ sag.nummer }}</td>
+              <td class="c-titel">{{ sag.titel }}</td>
+              <td>
+                <span class="sag-status" [class.closed]="sag.status === 'lukket'">{{ sag.status === 'åben' ? 'Åben' : 'Lukket' }}</span>
+              </td>
+              <td class="c-fra">
+                @if (ansvarlig(sag.ansvarligId); as b) {
+                  <span class="person"><span class="avatar xs" [style.background]="b.farve">{{ b.initialer }}</span>{{ b.navn }}</span>
+                }
+              </td>
+              <td class="num">{{ antalAkter(sag.id) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  } @else if (s.akterIVisning().length) {
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="c-ikon"></th>
+          @for (k of kolonner; track k.id) {
+            <th
+              [class]="k.cls"
+              [class.sorted]="s.sortering().kol === k.id"
+              (click)="sorter(k.id)"
+              [attr.aria-sort]="s.sortering().kol === k.id ? (s.sortering().retning === 1 ? 'ascending' : 'descending') : 'none'"
+            >
+              <span class="th">
+                {{ k.navn }}
+                <span class="ms sort-ind">{{ s.sortering().kol === k.id && s.sortering().retning === 1 ? 'arrow_upward' : 'arrow_downward' }}</span>
+              </span>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of s.akterIVisning(); track a.id) {
+          <tr
+            [class.selected]="s.valgte().has(a.id)"
+            [class.focus]="s.fokusId() === a.id"
+            [class.unread]="a.ulaest"
+            (click)="s.klikRaekke(a.id, $event)"
+            (dblclick)="s.aabnAkt(a.id)"
+          >
+            <td class="c-ikon">
+              <span class="ms type" [title]="typeNavn(a.type)" [attr.data-type]="a.type">{{ typeIkon(a.type) }}</span>
+            </td>
+            <td class="c-titel">
+              <div class="titel-cell">
+                @if (a.ulaest) {
+                  <span class="unread-dot" aria-label="Ulæst"></span>
+                }
+                <span class="t">{{ a.titel }}</span>
+                @if (a.godkendelse; as g) {
+                  <span class="status-chip" [attr.data-status]="g.status">
+                    {{ g.status === 'afventer' ? 'Afventer' : g.status === 'godkendt' ? 'Godkendt' : 'Afvist' }}
+                  </span>
+                }
+                <span class="marks">
+                  @if (a.mitFlag.farve) {
+                    <span class="flag-dot" [style.background]="flagFarve(a.mitFlag.farve)" title="Mit flag"></span>
+                  }
+                  @if (a.teamFlag.farve) {
+                    <span class="flag-dot team" [style.background]="flagFarve(a.teamFlag.farve)" title="Teamets flag"></span>
+                  }
+                  @if (a.favorit) {
+                    <span class="ms fill fav">star</span>
+                  }
+                </span>
+              </div>
+            </td>
+            <td class="c-dato">{{ a.brevdato | date: 'dd-MM-yyyy' }}</td>
+            <td class="c-dato2">{{ a.sorteringsdato | date: 'dd-MM-yyyy HH:mm' }}</td>
+            <td class="c-fra">{{ fraNavn(a) }}</td>
+            <td class="c-sag">{{ sagsnr(a) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (s.mainTab() === 'sager' ? !s.sagerIVisning().length : !s.akterIVisning().length) {
+    <div class="empty-state">
+      <span class="empty-icon"><span class="ms">{{ tom().ikon }}</span></span>
+      <h3>{{ tom().titel }}</h3>
+      <p>{{ tom().tekst }}</p>
+      @if (harAktivtFilter()) {
+        <button class="btn btn-secondary" style="margin-top: 12px" (click)="s.soegetekst.set(''); rydFiltre()">
+          Ryd søgning og filtre
+        </button>
+      }
+    </div>
+  }
+</div>

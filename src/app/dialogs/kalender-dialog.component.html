@@ -1,0 +1,86 @@
+<div class="dlg-backdrop" (click)="luk()">
+  <div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="kal-titel" (click)="$event.stopPropagation()">
+    <div class="dlg-head">
+      <span class="dlg-icon"><span class="ms">{{ visning() === 'kalender' ? 'calendar_month' : 'notifications' }}</span></span>
+      <div>
+        <h2 id="kal-titel">{{ visning() === 'kalender' ? 'Kalender' : 'Påmindelser' }}</h2>
+        <p>Frister fra dine flag, teamets flag og godkendelser.</p>
+      </div>
+      <div class="seg" role="tablist">
+        <button role="tab" [class.on]="visning() === 'kalender'" (click)="visning.set('kalender')">Kalender</button>
+        <button role="tab" [class.on]="visning() === 'paamindelser'" (click)="visning.set('paamindelser')">
+          Påmindelser
+          <span class="count">{{ frister().length }}</span>
+        </button>
+      </div>
+      <button class="icon-btn" (click)="luk()" aria-label="Luk"><span class="ms">close</span></button>
+    </div>
+
+    <div class="dlg-body">
+      @if (visning() === 'kalender') {
+        <div class="cal-layout">
+          <div class="cal">
+            <div class="cal-head">
+              <button class="icon-btn" (click)="skiftMaaned(-1)" aria-label="Forrige måned"><span class="ms">chevron_left</span></button>
+              <strong>{{ maaned() | date: 'MMMM y' }}</strong>
+              <button class="icon-btn" (click)="skiftMaaned(1)" aria-label="Næste måned"><span class="ms">chevron_right</span></button>
+              <button class="btn btn-ghost today" (click)="gaaTilIdag()">I dag</button>
+            </div>
+            <div class="cal-grid">
+              @for (u of ugedage; track u) {
+                <div class="wd">{{ u }}</div>
+              }
+              @for (dag of dage(); track dag.iso) {
+                <button
+                  class="day"
+                  [class.muted]="!dag.iMaaned"
+                  [class.today]="dag.iso === idag"
+                  [class.sel]="dag.iso === valgtDag()"
+                  (click)="vaelg(dag)"
+                >
+                  <span class="nr">{{ dag.nr }}</span>
+                  <span class="dots">
+                    @for (f of (prDag().get(dag.iso) ?? []).slice(0, 3); track $index) {
+                      <span class="dot" [style.background]="f.farve"></span>
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="day-list">
+            <h3>{{ datoFraIso(valgtDag()) | date: 'EEEE d. MMMM' }}</h3>
+            @for (f of valgteFrister(); track $index) {
+              <button class="item" (click)="aabn(f)">
+                <span class="bar" [style.background]="f.farve"></span>
+                <span class="ms">{{ typeIkon(f.akt.type) }}</span>
+                <span class="txt"><strong>{{ f.akt.titel }}</strong><small>{{ f.hvad }}</small></span>
+              </button>
+            } @empty {
+              <p class="none">Ingen frister denne dag.</p>
+            }
+          </div>
+        </div>
+      } @else {
+        @for (g of grupper(); track g.navn) {
+          <h3 class="grp" [attr.data-tone]="g.tone">{{ g.navn }} <span>{{ g.frister.length }}</span></h3>
+          @for (f of g.frister; track $index) {
+            <button class="item" (click)="aabn(f)">
+              <span class="bar" [style.background]="f.farve"></span>
+              <span class="ms">{{ typeIkon(f.akt.type) }}</span>
+              <span class="txt"><strong>{{ f.akt.titel }}</strong><small>{{ f.hvad }}</small></span>
+              <span class="when" [attr.data-tone]="g.tone">{{ datoFraIso(f.dato) | date: 'd. MMM' }}</span>
+            </button>
+          }
+        } @empty {
+          <div class="empty-state">
+            <span class="empty-icon"><span class="ms">notifications_off</span></span>
+            <h3>Ingen påmindelser</h3>
+            <p>Sæt en frist på en akt i båndet for at få en påmindelse.</p>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
