@@ -1,4 +1,4 @@
-import { Component, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../core/data.service';
 import { AKT_TYPER, AktType } from '../core/models';
@@ -39,9 +39,29 @@ const TEKSTER: Record<AktType, { titel: string; knap: string; ikon: string; besk
     .suggest { display: flex; flex-wrap: wrap; gap: 6px; }
     .suggest button { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px dashed var(--border-strong); font-size: 12.5px; color: var(--text-2); }
     .suggest button:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
-    .with-icon { position: relative; }
-    .with-icon .select { padding-right: 40px; appearance: none; }
-    .with-icon .ms { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+    .sag-felt { position: relative; }
+    .sag-felt .input { padding-left: 38px; }
+    .sag-lead { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 20px; pointer-events: none; }
+    .sag-liste { margin-top: 4px; max-height: 220px; overflow: auto; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+    .sag-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); text-align: left; font-size: 13.5px; color: var(--text); }
+    .sag-opt:hover { background: var(--surface-hover); }
+    .sag-opt .ms { font-size: 19px; color: var(--text-3); }
+    .sag-opt .nr { font-variant-numeric: tabular-nums; color: var(--text-2); flex-shrink: 0; }
+    .sag-opt .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sag-opt.opret { color: var(--primary); font-weight: 600; }
+    .sag-opt.opret .ms { color: var(--primary); }
+    .sag-opt.opret:hover { background: var(--primary-soft); }
+    .sag-sektion { margin: 6px 10px 2px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); }
+    .sag-tom { padding: 8px 10px; font-size: 13px; color: var(--text-3); }
+    .sag-valgt { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 6px 6px 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-2); }
+    .sag-valgt.ny { border-color: var(--primary); background: var(--primary-soft); }
+    .sag-ico { color: var(--primary); font-size: 20px; }
+    .sag-tekst { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 13.5px; }
+    .sag-tekst .nr { color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .sag-tekst small { flex-basis: 100%; font-size: 12px; color: var(--text-3); }
+    .ny-badge { padding: 1px 7px; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-size: 11px; font-weight: 600; }
+    .sag-skift { padding: 5px 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; color: var(--primary); }
+    .sag-skift:hover { background: var(--surface-hover); }
     .info { font-size: 16px; color: var(--text-3); cursor: help; }
     .recipients { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .recipients .select { width: auto; min-width: 180px; flex: 1; min-height: 34px; padding: 4px 10px; }
@@ -69,7 +89,11 @@ export class NyAktDialogComponent {
   tekst = '';
   readonly forsoegt = signal(false);
 
-  readonly aabneSager = computed(() => this.d.sager().filter((x) => x.status === 'åben' || x.id === this.sagId));
+  sagSoeg = '';
+  nySagTitel: string | null = null;
+  readonly sagAaben = signal(false);
+  readonly nyTilstand = signal(false);
+  private readonly sagFelt = viewChild<ElementRef<HTMLInputElement>>('sagFelt');
 
   constructor() {
     const st = this.s.dialog();
@@ -141,6 +165,60 @@ export class NyAktDialogComponent {
     return this.d.bruger(id);
   }
 
+  valgtSag() {
+    return this.sagId == null ? undefined : this.d.sager().find((x) => x.id === this.sagId);
+  }
+
+  sagForslag() {
+    const q = this.sagSoeg.trim().toLowerCase();
+    return this.d
+      .sager()
+      .filter((x) => x.status === 'åben')
+      .filter((x) => !q || x.titel.toLowerCase().includes(q) || x.nummer.toLowerCase().includes(q));
+  }
+
+  vaelgSag(id: number) {
+    this.sagId = id;
+    this.nySagTitel = null;
+    this.sagSoeg = '';
+    this.sagAaben.set(false);
+  }
+
+  vaelgNySag() {
+    const t = this.sagSoeg.trim();
+    if (!t) {
+      // Ingen titel endnu: skift feltet til "ny sag"-tilstand og bed om en titel
+      this.nyTilstand.set(true);
+      this.sagFelt()?.nativeElement.focus();
+      return;
+    }
+    this.nySagTitel = t;
+    this.sagId = null;
+    this.sagSoeg = '';
+    this.sagAaben.set(false);
+    this.nyTilstand.set(false);
+  }
+
+  rydSag() {
+    this.sagId = null;
+    this.nySagTitel = null;
+    this.sagSoeg = '';
+    setTimeout(() => this.sagFelt()?.nativeElement.focus());
+  }
+
+  sagTast(ev: KeyboardEvent) {
+    if (ev.key === 'Escape' && this.sagAaben()) {
+      ev.stopPropagation();
+      this.sagAaben.set(false);
+      this.nyTilstand.set(false);
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const forslag = this.sagForslag();
+      if (!this.nyTilstand() && this.sagSoeg.trim() && forslag.length) this.vaelgSag(forslag[0].id);
+      else this.vaelgNySag();
+    }
+  }
+
   luk() {
     this.s.dialog.set(null);
   }
@@ -149,6 +227,7 @@ export class NyAktDialogComponent {
     this.forsoegt.set(true);
     if (this.emneInput.trim()) this.tilfoejEmne();
     if (!this.gyldig) return;
+    if (this.nySagTitel) this.sagId = this.d.opretSag(this.nySagTitel, this.d.mig.id).id;
     const a = this.d.opretAkt({
       titel: this.titel,
       type: this.aktType,

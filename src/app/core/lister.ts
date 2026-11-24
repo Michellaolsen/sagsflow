@@ -26,7 +26,7 @@ export const LISTER: ListeDef[] = [
   },
   {
     id: 'arkivet',
-    navn: 'Arkivet',
+    navn: 'Alle sager',
     ikon: 'inventory_2',
     tomBesked: 'Der er ingen journaliserede akter endnu.',
     filter: (a) => a.sagId != null,

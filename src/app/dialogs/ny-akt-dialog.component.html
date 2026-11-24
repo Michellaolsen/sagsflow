@@ -88,17 +88,70 @@
       <div class="field">
         <label for="akt-sag">
           Sag
-          <span class="ms info" title="Akter på en sag bliver journaliseret og kan findes i Arkivet.">info</span>
+          <span class="ms info" title="Akter på en sag bliver journaliseret og kan findes under Alle sager.">info</span>
         </label>
-        <div class="with-icon">
-          <select id="akt-sag" name="sag" class="select" [(ngModel)]="sagId">
-            <option [ngValue]="null">Vælg en sag</option>
-            @for (sg of aabneSager(); track sg.id) {
-              <option [ngValue]="sg.id">{{ sg.nummer }} · {{ sg.titel }}</option>
+        @if (valgtSag(); as sg) {
+          <div class="sag-valgt">
+            <span class="ms sag-ico">cases</span>
+            <span class="sag-tekst"><span class="nr">{{ sg.nummer }}</span>{{ sg.titel }}</span>
+            <button type="button" class="sag-skift" (click)="rydSag()">Skift</button>
+          </div>
+        } @else if (nySagTitel) {
+          <div class="sag-valgt ny">
+            <span class="ms sag-ico">create_new_folder</span>
+            <span class="sag-tekst">
+              <span class="ny-badge">Ny sag</span>{{ nySagTitel }}
+              <small>Oprettes sammen med akten</small>
+            </span>
+            <button type="button" class="sag-skift" (click)="rydSag()">Skift</button>
+          </div>
+        } @else {
+          <div class="sag-combo">
+            <div class="sag-felt">
+            <span class="ms sag-lead">search</span>
+            <input
+              #sagFelt
+              id="akt-sag"
+              name="sagSoeg"
+              class="input"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="sag-liste"
+              [attr.aria-expanded]="sagAaben()"
+              [placeholder]="nyTilstand() ? 'Skriv titlen på den nye sag' : 'Søg efter en sag, eller opret en ny'"
+              [(ngModel)]="sagSoeg"
+              (focus)="sagAaben.set(true)"
+              (input)="sagAaben.set(true)"
+              (blur)="sagAaben.set(false); nyTilstand.set(false)"
+              (keydown)="sagTast($event)"
+            />
+            </div>
+            @if (sagAaben()) {
+              <div class="sag-liste" id="sag-liste" role="listbox">
+                <button type="button" class="sag-opt opret" (mousedown)="$event.preventDefault()" (click)="vaelgNySag()">
+                  <span class="ms">add</span>
+                  @if (sagSoeg.trim()) {
+                    <span>Opret ny sag: <strong>“{{ sagSoeg.trim() }}”</strong></span>
+                  } @else {
+                    <span>Opret ny sag</span>
+                  }
+                </button>
+                @if (!nyTilstand()) {
+                  <div class="sag-sektion">Eksisterende sager</div>
+                  @for (sg of sagForslag(); track sg.id) {
+                    <button type="button" class="sag-opt" role="option" (mousedown)="$event.preventDefault()" (click)="vaelgSag(sg.id)">
+                      <span class="ms">cases</span><span class="nr">{{ sg.nummer }}</span><span class="t">{{ sg.titel }}</span>
+                    </button>
+                  } @empty {
+                    <div class="sag-tom">Ingen åbne sager matcher “{{ sagSoeg.trim() }}”</div>
+                  }
+                }
+              </div>
             }
-          </select>
-          <span class="ms">cases</span>
-        </div>
+          </div>
+          <span class="hint">Find en eksisterende sag, eller opret en ny direkte herfra.</span>
+        }
       </div>
 
       @if (aktType !== 'akt') {
