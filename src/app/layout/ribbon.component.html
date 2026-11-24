@@ -1,8 +1,15 @@
 <header class="titlebar">
   <div class="brand">
-    <span class="logo"><span class="ms fill">folder_managed</span></span>
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs>
+        <mask id="sf-logo-cut">
+          <rect width="48" height="48" fill="#fff" />
+          <path d="M28.8 15.8A5.5 5.5 0 1 0 24 24a5.5 5.5 0 1 1-4.8 8.2" fill="none" stroke="#000" stroke-width="4.5" stroke-linecap="round" />
+        </mask>
+      </defs>
+      <rect x="4" y="4" width="40" height="40" rx="11" fill="#fff" mask="url(#sf-logo-cut)" />
+    </svg>
     <span class="brand-name">Sagsflow</span>
-    <span class="env">Test</span>
   </div>
 
   <nav class="menubar" role="tablist" aria-label="Hovedmenu">
@@ -268,22 +275,6 @@
             </div>
           </div>
           <div class="glabel">Kalender</div>
-        </div>
-      }
-
-      @case ('app') {
-        <div class="group">
-          <div class="gbody">
-            <button class="rb big" (click)="opdater()"><span class="ms">sync</span><span>Opdater</span></button>
-            <button class="rb big" (click)="s.nyFane()"><span class="ms">tab</span><span>Ny fane</span></button>
-          </div>
-          <div class="glabel">Visning</div>
-        </div>
-        <div class="group">
-          <div class="gbody">
-            <button class="rb big" (click)="logUd()"><span class="ms">logout</span><span>Log ud</span></button>
-          </div>
-          <div class="glabel">Konto</div>
         </div>
       }
 

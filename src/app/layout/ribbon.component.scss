@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  height: 52px;
+  height: 90px;
   padding: 0 10px 0 14px;
   background: var(--header-bg);
   color: var(--header-text);
@@ -20,36 +20,21 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  margin-right: 22px;
 }
 
 .logo {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: rgb(255 255 255 / 0.16);
-
-  .ms {
-    font-size: 19px;
-  }
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
 }
 
 .brand-name {
   font-weight: 700;
-  font-size: 15.5px;
-  letter-spacing: -0.01em;
-}
-
-.env {
-  padding: 1px 7px;
-  border-radius: 5px;
-  background: #ffd166;
-  color: #3d2c00;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  color: #fff;
 }
 
 .menubar {
@@ -271,7 +256,7 @@
     background: var(--primary);
     color: var(--on-primary);
     font-size: 22px;
-    box-shadow: 0 2px 6px rgb(47 91 234 / 0.35);
+    box-shadow: 0 2px 6px rgb(4 124 110 / 0.35);
   }
 
   &.big.toggle.on {
@@ -380,8 +365,7 @@
 }
 
 @media (max-width: 960px) {
-  .user-text,
-  .env {
+  .user-text {
     display: none;
   }
 }

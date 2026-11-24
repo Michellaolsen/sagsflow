@@ -15,11 +15,10 @@ export class RibbonComponent {
   readonly d = inject(DataService);
 
   readonly menuer: { id: MenuFane; navn: string }[] = [
-    { id: 'app', navn: 'Sagsflow' },
-    { id: 'hoved', navn: 'Hovedvindue' },
+    { id: 'hoved', navn: 'Overblik' },
     { id: 'indstillinger', navn: 'Indstillinger' },
-    { id: 'admin', navn: 'Administrator' },
-    { id: 'hjaelp', navn: 'Hjælp' },
+    { id: 'admin', navn: 'Værktøjer' },
+    { id: 'hjaelp', navn: 'Hjælp & værktøjer' },
   ];
   readonly flagFarver = FLAG_FARVER;
   readonly flagInfo = flagInfo;
@@ -71,11 +70,6 @@ export class RibbonComponent {
 
   udskriv() {
     window.print();
-  }
-
-  opdater() {
-    this.d.stempel();
-    this.s.toast('Listerne er opdateret', 'sync');
   }
 
   nulstilDemo() {

@@ -4,7 +4,7 @@ import { LISTE_MAP, matcherKriterier } from './lister';
 import { AKT_TYPER, Akt, AktType, FlagFarve, ListeId, Soegekriterier } from './models';
 
 export type MainTab = 'akter' | 'sager' | 'dokumenter' | 'bestillinger';
-export type MenuFane = 'app' | 'hoved' | 'indstillinger' | 'admin' | 'hjaelp';
+export type MenuFane = 'hoved' | 'indstillinger' | 'admin' | 'hjaelp';
 export type FilterId = 'ulaeste' | 'flag' | 'frist' | 'favorit' | 'godkendelse';
 export type SoegeFelt = 'titel' | 'fra' | 'sag' | 'emneord' | 'tekst';
 export type SortKol = 'titel' | 'brevdato' | 'sorteringsdato' | 'fra' | 'sag';

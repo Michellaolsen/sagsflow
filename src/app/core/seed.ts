@@ -3,7 +3,7 @@ import { Akt, Bruger, Sag, isoDato } from './models';
 export const MIG_ID = 'sh';
 
 export const BRUGERE: Bruger[] = [
-  { id: 'sh', navn: 'Sofie Holm', initialer: 'SH', enhed: 'Udvikling og Teknologi – Team 2', farve: '#2f5bea' },
+  { id: 'sh', navn: 'Sofie Holm', initialer: 'SH', enhed: 'Udvikling og Teknologi – Team 2', farve: '#047c6e' },
   { id: 'al', navn: 'Anders Lund', initialer: 'AL', enhed: 'Indkøb', farve: '#e0731a' },
   { id: 'cb', navn: 'Camilla Berg', initialer: 'CB', enhed: 'Økonomi', farve: '#8e4ec6' },
   { id: 'jf', navn: 'Jonas Friis', initialer: 'JF', enhed: 'Udvikling og Teknologi – Team 2', farve: '#1f9d8a' },

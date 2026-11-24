@@ -14,13 +14,13 @@
   --text-2: #566075;
   --text-3: #8b93a5;
 
-  --primary: #2f5bea;
+  --primary: #047c6e;
   --primary-hover: #2449c9;
   --primary-soft: #e9eefe;
   --primary-soft-2: #d9e3fd;
   --on-primary: #ffffff;
 
-  --header-bg: linear-gradient(100deg, #172a66 0%, #1f3f9e 55%, #2f5bea 100%);
+  --header-bg: #000c2e;
   --header-text: #e9eefc;
   --header-muted: rgb(233 238 252 / 0.7);
 
@@ -62,7 +62,7 @@
   --primary-soft-2: #283a66;
   --on-primary: #ffffff;
 
-  --header-bg: linear-gradient(100deg, #0d1530 0%, #14245a 60%, #1d3486 100%);
+  --header-bg: #000c2e;
 
   --success: #3fc285;
   --success-soft: #133325;
@@ -174,7 +174,7 @@ button:disabled {
 .btn-primary {
   background: var(--primary);
   color: var(--on-primary);
-  box-shadow: 0 1px 2px rgb(47 91 234 / 0.3);
+  box-shadow: 0 1px 2px rgb(4 124 110 / 0.3);
 
   &:hover:not(:disabled) {
     background: var(--primary-hover);

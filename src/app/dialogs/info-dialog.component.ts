@@ -27,7 +27,7 @@ import { StateService } from '../core/state.service';
           </div>
           <div class="dlg-body">
             <p>Prototype bygget i Angular. Data gemmes lokalt i din browser, så du kan afprøve alle funktioner uden en server.</p>
-            <p>Brug <strong>Administrator → Nulstil demodata</strong> for at starte forfra.</p>
+            <p>Brug <strong>Værktøjer → Nulstil demodata</strong> for at starte forfra.</p>
           </div>
         }
         <div class="dlg-foot">
