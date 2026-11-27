@@ -16,6 +16,28 @@ export const EMNEORD = [
   'Netværk', 'Møde', 'Referat', 'Leverandør', 'Økonomi', 'IT-sikkerhed', 'Ferie',
 ];
 
+/** Demo-værdier til sagens klassifikation */
+export const JOURNALPLANER = [
+  '00.01.00 – Kommunens styrelse',
+  '02.01.00 – Byggesager',
+  '81.03.00 – Personaleforhold',
+  '82.02.00 – Indkøb og udbud',
+  '85.02.00 – IT og digitalisering',
+];
+export const HANDLINGSFACETTER = [
+  'G01 – Generelle sager',
+  'G01 – Ansøgning og tilladelse',
+  'K07 – Kontrakter og aftaler',
+  'P20 – Rekruttering',
+  'S05 – Budget og regnskab',
+];
+export const SAGSFORLOEB = [
+  'Standard sagsbehandling',
+  'Høring',
+  'Godkendelsesforløb',
+  'Naboorientering og høring',
+];
+
 function dage(n: number, h = 9, m = 0): Date {
   const d = new Date();
   d.setDate(d.getDate() + n);

@@ -1,170 +1,210 @@
 <div class="dlg-backdrop" (click)="luk()">
-  <form class="dlg" role="dialog" aria-modal="true" aria-labelledby="ny-akt-titel" (click)="$event.stopPropagation()" (ngSubmit)="opret()">
-    <div class="dlg-head">
-      <span class="dlg-icon"><span class="ms">{{ tekster.ikon }}</span></span>
-      <div>
-        <h2 id="ny-akt-titel">{{ tekster.titel }}</h2>
-        <p>{{ tekster.beskrivelse }}</p>
-      </div>
+  <form class="dlg" [class.hurtig]="hurtig" role="dialog" aria-modal="true" aria-labelledby="ny-akt-titel" (click)="$event.stopPropagation()" (ngSubmit)="opret()">
+    <div class="dlg-head" [class.hurtig-head]="hurtig">
+      @if (hurtig) {
+        <div class="hh-tekst">
+          <span class="eyebrow">Hurtig-oprettelse</span>
+          <h2 id="ny-akt-titel">{{ tilstand() === 'sag' ? 'Opret ny sag' : 'Opret ny akt' }}</h2>
+        </div>
+      } @else {
+        <span class="dlg-icon"><span class="ms">{{ tekster.ikon }}</span></span>
+        <div>
+          <h2 id="ny-akt-titel">{{ tekster.titel }}</h2>
+          <p>{{ tekster.beskrivelse }}</p>
+        </div>
+      }
       <button type="button" class="icon-btn" (click)="luk()" aria-label="Luk"><span class="ms">close</span></button>
     </div>
 
     <div class="dlg-body">
-      @if (kraeverModtager) {
-        <div class="field">
-          <span class="label">Til</span>
-          <div class="input recipients" [class.invalid]="forsoegt() && !tilIds.length">
-            @for (id of tilIds; track id) {
-              @if (bruger(id); as b) {
-                <span class="person-chip">
-                  <span class="avatar" [style.background]="b.farve">{{ b.initialer }}</span>{{ b.navn }}
-                  <button type="button" (click)="fjernModtager(id)" [attr.aria-label]="'Fjern ' + b.navn"><span class="ms">close</span></button>
-                </span>
-              }
-            }
-            @if (andreBrugere().length) {
-              <select class="select" (change)="tilfoejModtager($event)" aria-label="Tilføj modtager">
-                <option value="">+ Tilføj modtager</option>
-                @for (b of andreBrugere(); track b.id) {
-                  <option [value]="b.id">{{ b.navn }} – {{ b.enhed }}</option>
-                }
-              </select>
-            }
-          </div>
-          @if (forsoegt() && !tilIds.length) {
-            <span class="error">Vælg mindst én modtager.</span>
-          }
+      @if (hurtig) {
+        <div class="seg" role="tablist" aria-label="Hvad vil du oprette?">
+          <button type="button" role="tab" [class.on]="tilstand() === 'sag'" [attr.aria-selected]="tilstand() === 'sag'" (click)="skiftTilstand('sag')">
+            <span class="ms fill seg-sag">folder</span>Opret sag <small>(overordnet)</small>
+          </button>
+          <button type="button" role="tab" [class.on]="tilstand() === 'akt'" [attr.aria-selected]="tilstand() === 'akt'" (click)="skiftTilstand('akt')">
+            <span class="ms fill seg-akt">description</span>Opret akt <small>(under sag)</small>
+          </button>
         </div>
       }
 
-      <div class="field">
-        <label for="akt-titel">Titel</label>
-        <input
-          #titelFelt
-          id="akt-titel"
-          name="titel"
-          class="input"
-          [class.invalid]="forsoegt() && !titel.trim()"
-          placeholder="Angiv titel på den nye akt"
-          autocomplete="off"
-          [(ngModel)]="titel"
-        />
-        @if (forsoegt() && !titel.trim()) {
-          <span class="error">Titlen skal udfyldes.</span>
-        }
-      </div>
-
-      <div class="field">
-        <label for="akt-emne">Emneord</label>
-        <div class="input tag-input" (click)="emneFelt.focus()">
-          @for (e of emneord; track e) {
-            <span class="chip">
-              {{ e }}
-              <button type="button" (click)="fjernEmne(e); $event.stopPropagation()" [attr.aria-label]="'Fjern ' + e">
-                <span class="ms">close</span>
-              </button>
-            </span>
-          }
-          <input
-            #emneFelt
-            id="akt-emne"
-            name="emne"
-            autocomplete="off"
-            [placeholder]="emneord.length ? '' : 'Vælg emneord'"
-            [(ngModel)]="emneInput"
-            (keydown)="emneTast($event)"
-          />
-          <span class="ms tag-ico">sell</span>
-        </div>
-        @if (forslag().length) {
-          <div class="suggest">
-            @for (f of forslag(); track f) {
-              <button type="button" (click)="tilfoejEmne(f)">+ {{ f }}</button>
-            }
-          </div>
-        }
-      </div>
-
-      <div class="field">
-        <label for="akt-sag">
-          Sag
-          <span class="ms info" title="Akter på en sag bliver journaliseret og kan findes under Alle sager.">info</span>
-        </label>
-        @if (valgtSag(); as sg) {
-          <div class="sag-valgt">
-            <span class="ms sag-ico">cases</span>
-            <span class="sag-tekst"><span class="nr">{{ sg.nummer }}</span>{{ sg.titel }}</span>
-            <button type="button" class="sag-skift" (click)="rydSag()">Skift</button>
-          </div>
-        } @else if (nySagTitel) {
-          <div class="sag-valgt ny">
-            <span class="ms sag-ico">create_new_folder</span>
-            <span class="sag-tekst">
-              <span class="ny-badge">Ny sag</span>{{ nySagTitel }}
-              <small>Oprettes sammen med akten</small>
-            </span>
-            <button type="button" class="sag-skift" (click)="rydSag()">Skift</button>
-          </div>
-        } @else {
-          <div class="sag-combo">
-            <div class="sag-felt">
-            <span class="ms sag-lead">search</span>
-            <input
-              #sagFelt
-              id="akt-sag"
-              name="sagSoeg"
-              class="input"
-              autocomplete="off"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-controls="sag-liste"
-              [attr.aria-expanded]="sagAaben()"
-              [placeholder]="nyTilstand() ? 'Skriv titlen på den nye sag' : 'Søg efter en sag, eller opret en ny'"
-              [(ngModel)]="sagSoeg"
-              (focus)="sagAaben.set(true)"
-              (input)="sagAaben.set(true)"
-              (blur)="sagAaben.set(false); nyTilstand.set(false)"
-              (keydown)="sagTast($event)"
-            />
-            </div>
-            @if (sagAaben()) {
-              <div class="sag-liste" id="sag-liste" role="listbox">
-                <button type="button" class="sag-opt opret" (mousedown)="$event.preventDefault()" (click)="vaelgNySag()">
-                  <span class="ms">add</span>
-                  @if (sagSoeg.trim()) {
-                    <span>Opret ny sag: <strong>“{{ sagSoeg.trim() }}”</strong></span>
-                  } @else {
-                    <span>Opret ny sag</span>
-                  }
-                </button>
-                @if (!nyTilstand()) {
-                  <div class="sag-sektion">Eksisterende sager</div>
-                  @for (sg of sagForslag(); track sg.id) {
-                    <button type="button" class="sag-opt" role="option" (mousedown)="$event.preventDefault()" (click)="vaelgSag(sg.id)">
-                      <span class="ms">cases</span><span class="nr">{{ sg.nummer }}</span><span class="t">{{ sg.titel }}</span>
-                    </button>
-                  } @empty {
-                    <div class="sag-tom">Ingen åbne sager matcher “{{ sagSoeg.trim() }}”</div>
-                  }
+      @if (tilstand() === 'sag') {
+        <!-- ===== Opret sag (top-down) ===== -->
+        <ng-container [ngTemplateOutlet]="sagFelter" [ngTemplateOutletContext]="{ titelLabel: 'Sagstitel', fuld: true }" />
+      } @else {
+        <!-- ===== Opret akt (bottom-up) ===== -->
+        @if (kraeverModtager) {
+          <div class="field">
+            <span class="label">Til</span>
+            <div class="input recipients" [class.invalid]="forsoegt() && !tilIds.length">
+              @for (id of tilIds; track id) {
+                @if (bruger(id); as b) {
+                  <span class="person-chip">
+                    <span class="avatar" [style.background]="b.farve">{{ b.initialer }}</span>{{ b.navn }}
+                    <button type="button" (click)="fjernModtager(id)" [attr.aria-label]="'Fjern ' + b.navn"><span class="ms">close</span></button>
+                  </span>
                 }
-              </div>
+              }
+              @if (andreBrugere().length) {
+                <select class="select" (change)="tilfoejModtager($event)" aria-label="Tilføj modtager">
+                  <option value="">+ Tilføj modtager</option>
+                  @for (b of andreBrugere(); track b.id) {
+                    <option [value]="b.id">{{ b.navn }} – {{ b.enhed }}</option>
+                  }
+                </select>
+              }
+            </div>
+            @if (forsoegt() && !tilIds.length) {
+              <span class="error">Vælg mindst én modtager.</span>
             }
           </div>
-          <span class="hint">Find en eksisterende sag, eller opret en ny direkte herfra.</span>
         }
-      </div>
 
-      @if (aktType !== 'akt') {
         <div class="field">
-          <label for="akt-tekst">{{ aktType === 'chat' ? 'Besked' : 'Indhold' }}</label>
-          <textarea id="akt-tekst" name="tekst" class="textarea" rows="5" [(ngModel)]="tekst"></textarea>
+          <label for="akt-titel">{{ hurtig ? 'Akttitel *' : 'Titel' }}</label>
+          <input
+            #titelFelt
+            id="akt-titel"
+            name="titel"
+            class="input"
+            [class.invalid]="forsoegt() && !titel.trim()"
+            [placeholder]="hurtig ? 'F.eks. Indkommet tilbud fra leverandør' : 'Angiv titel på den nye akt'"
+            autocomplete="off"
+            [(ngModel)]="titel"
+          />
+          @if (forsoegt() && !titel.trim()) {
+            <span class="error">Titlen skal udfyldes.</span>
+          }
         </div>
+
+        <div class="field">
+          <label for="akt-emne">Emneord</label>
+          <div class="input tag-input" (click)="emneFelt.focus()">
+            @for (e of emneord; track e) {
+              <span class="chip">
+                {{ e }}
+                <button type="button" (click)="fjernEmne(e); $event.stopPropagation()" [attr.aria-label]="'Fjern ' + e">
+                  <span class="ms">close</span>
+                </button>
+              </span>
+            }
+            <input
+              #emneFelt
+              id="akt-emne"
+              name="emne"
+              autocomplete="off"
+              [placeholder]="emneord.length ? '' : 'F.eks. Indkøb, Tilbud, Bilag'"
+              [(ngModel)]="emneInput"
+              (keydown)="emneTast($event)"
+            />
+            <span class="ms tag-ico">sell</span>
+          </div>
+          @if (forslag().length) {
+            <div class="suggest">
+              @for (f of forslag(); track f) {
+                <button type="button" (click)="tilfoejEmne(f)">+ {{ f }}</button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="sag-boks" [class.inline]="nySagInline()">
+          <div class="sag-boks-head">
+            <span class="sb-label">
+              Tilknyt til sag{{ sagPaakraevet ? ' *' : '' }}
+              <span class="ms info" title="Akter på en sag bliver journaliseret og kan findes under Alle sager.">info</span>
+            </span>
+            @if (nySagInline()) {
+              <button type="button" class="link" (click)="nySagInline.set(false)"><span class="ms">arrow_back</span>Vælg eksisterende sag i stedet</button>
+            } @else {
+              <button type="button" class="link" (click)="aabnInline()"><span class="ms">add</span>Opret ny sag</button>
+            }
+          </div>
+
+          @if (nySagInline()) {
+            <div class="inline-note"><span class="ms">create_new_folder</span>Opretter ny overordnet sag samtidig med akten:</div>
+            <ng-container [ngTemplateOutlet]="sagFelter" [ngTemplateOutletContext]="{ titelLabel: 'Ny sagstitel', fuld: false }" />
+          } @else {
+            <select id="akt-sag" name="sag" class="select" [class.invalid]="forsoegt() && sagPaakraevet && sagId == null" [(ngModel)]="sagId">
+              <option [ngValue]="null">{{ sagPaakraevet ? 'Vælg en sag …' : 'Ingen sag' }}</option>
+              @for (sg of aabneSager(); track sg.id) {
+                <option [ngValue]="sg.id">{{ sg.nummer }} – {{ sg.titel }}</option>
+              }
+            </select>
+            @if (forsoegt() && sagPaakraevet && sagId == null) {
+              <span class="error">Vælg en sag, eller opret en ny.</span>
+            }
+          }
+        </div>
+
+        @if (aktType !== 'akt') {
+          <div class="field">
+            <label for="akt-tekst">{{ aktType === 'chat' ? 'Besked' : 'Indhold' }}</label>
+            <textarea id="akt-tekst" name="tekst" class="textarea" rows="5" [(ngModel)]="tekst"></textarea>
+          </div>
+        }
       }
     </div>
 
-    <div class="dlg-foot split">
-      <button type="submit" class="btn btn-primary">{{ tekster.knap }}</button>
-      <button type="button" class="btn btn-secondary" (click)="luk()">Annullér</button>
+    <div class="dlg-foot" [class.split]="!hurtig">
+      @if (hurtig) {
+        <button type="button" class="btn btn-ghost" (click)="luk()">Annullér</button>
+        <button type="submit" class="btn btn-primary">
+          {{ tilstand() === 'sag' ? 'Opret sag & gå til sagsvindue' : 'Opret akt & gå til aktvindue' }}
+          <span class="ms">arrow_forward</span>
+        </button>
+      } @else {
+        <button type="submit" class="btn btn-primary">{{ tekster.knap }}</button>
+        <button type="button" class="btn btn-secondary" (click)="luk()">Annullér</button>
+      }
     </div>
   </form>
 </div>
+
+<!-- Sagens felter – bruges både til "Opret sag" og "Opret ny sag inline" -->
+<ng-template #sagFelter let-titelLabel="titelLabel" let-fuld="fuld">
+  <div class="field">
+    <label for="sag-titel">{{ titelLabel }} *</label>
+    <input
+      #sagTitelFelt
+      id="sag-titel"
+      name="sagTitel"
+      class="input"
+      autocomplete="off"
+      [placeholder]="fuld ? 'F.eks. Indkøb af mødelokaleudstyr' : 'Indtast titel på den nye sag …'"
+      [class.invalid]="forsoegt() && !sag.titel.trim()"
+      [(ngModel)]="sag.titel"
+    />
+    @if (forsoegt() && !sag.titel.trim()) {
+      <span class="error">Sagen skal have en titel.</span>
+    }
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label for="sag-ansvarlig">Ansvarlig{{ fuld ? ' *' : '' }}</label>
+      <select id="sag-ansvarlig" name="sagAnsvarlig" class="select" [(ngModel)]="sag.ansvarligId">
+        @for (b of d.brugere; track b.id) {
+          <option [value]="b.id" [title]="b.enhed">{{ b.navn }}{{ b.id === d.mig.id ? ' (dig)' : '' }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="sag-journalplan">Journalplan{{ fuld ? ' *' : '' }}</label>
+      <select id="sag-journalplan" name="sagJournalplan" class="select" [(ngModel)]="sag.journalplan">
+        @for (v of journalplaner; track v) { <option [value]="v">{{ v }}</option> }
+      </select>
+    </div>
+    <div class="field">
+      <label for="sag-facet">Handlingsfacet{{ fuld ? ' *' : '' }}</label>
+      <select id="sag-facet" name="sagFacet" class="select" [(ngModel)]="sag.handlingsfacet">
+        @for (v of handlingsfacetter; track v) { <option [value]="v">{{ v }}</option> }
+      </select>
+    </div>
+    <div class="field">
+      <label for="sag-forloeb">Sagsforløb{{ fuld ? ' *' : '' }}</label>
+      <select id="sag-forloeb" name="sagForloeb" class="select" [(ngModel)]="sag.sagsforloeb">
+        @for (v of sagsforloeb; track v) { <option [value]="v">{{ v }}</option> }
+      </select>
+    </div>
+  </div>
+</ng-template>

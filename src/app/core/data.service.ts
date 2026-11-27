@@ -133,7 +133,11 @@ export class DataService {
     return this.akt(a.id)!;
   }
 
-  opretSag(titel: string, ansvarligId: string): Sag {
+  opretSag(
+    titel: string,
+    ansvarligId: string,
+    klassifikation: Pick<Sag, 'journalplan' | 'handlingsfacet' | 'sagsforloeb'> = {},
+  ): Sag {
     const aar = new Date().getFullYear();
     const loebenr = Math.max(0, ...this.sager().map((s) => Number(s.nummer.split('-')[1]) || 0)) + 1;
     const sag: Sag = {
@@ -143,6 +147,7 @@ export class DataService {
       status: 'åben',
       ansvarligId,
       oprettet: new Date(),
+      ...klassifikation,
     };
     this.sager.update((l) => [...l, sag]);
     this.stempel();

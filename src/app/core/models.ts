@@ -30,6 +30,9 @@ export interface Sag {
   status: 'åben' | 'lukket';
   ansvarligId: string;
   oprettet: Date;
+  journalplan?: string;
+  handlingsfacet?: string;
+  sagsforloeb?: string;
 }
 
 export interface Flag {
